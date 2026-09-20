@@ -1,0 +1,749 @@
+// Sri Sai Balaji Driving School — database schema.
+//
+// Conventions
+//  - Primary keys are UUIDv7 (time-ordered, non-guessable).
+//  - Money is stored as INTEGER PAISE (₹5,000 = 500000). Never floats, never decimals.
+//  - Instants (a moment in time) are `timestamptz` in UTC. Business timezone is Asia/Kolkata
+//    and is applied only when displaying or when computing "business hours".
+//  - Calendar dates with no time-of-day (DOB, insurance expiry…) use `@db.Date`.
+//  - Recurring weekly wall-clock windows (instructor availability) are stored as minutes
+//    from local midnight, because they are business-local by definition.
+//  - Soft delete (`deletedAt`) is used only where history/references matter. Payments and
+//    lessons are never deleted; they change status.
+//  - Constraints Prisma cannot express (CHECKs, the double-booking EXCLUDE constraints) live
+//    in the hand-written migration `*_integrity_constraints`. Do not edit that file after it
+//    has been applied; add a new migration instead. See docs/erd.md.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Enums
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum Role {
+  SUPER_ADMIN
+  OWNER
+  ADMIN
+  INSTRUCTOR
+  STUDENT
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum StudentStatus {
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  INACTIVE
+}
+
+enum ContentStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum VehicleType {
+  CAR
+  TWO_WHEELER
+  OTHER
+}
+
+enum Transmission {
+  MANUAL
+  AUTOMATIC
+}
+
+enum VehicleStatus {
+  AVAILABLE
+  IN_USE
+  MAINTENANCE
+  INACTIVE
+}
+
+enum EnquiryStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  CLOSED
+}
+
+enum EnquirySource {
+  WEBSITE
+  PHONE
+  WALK_IN
+  WHATSAPP
+}
+
+enum TimeWindow {
+  MORNING
+  AFTERNOON
+  EVENING
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+  CANCELLED
+}
+
+enum BookingStatus {
+  REQUESTED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum LessonStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CASH
+  UPI
+  CARD
+  BANK_TRANSFER
+  ONLINE
+  OTHER
+}
+
+enum PaymentProvider {
+  MANUAL
+  RAZORPAY
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ReviewSource {
+  STUDENT
+  ADMIN_ENTERED
+}
+
+enum RtaRequestStatus {
+  NEW
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  WHATSAPP
+  SMS
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  CANCELLED
+}
+
+enum AuthTokenType {
+  PASSWORD_RESET
+  INVITE
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Identity & access
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A login identity. A person is a Student and/or Instructor via the optional profile
+/// relations; OWNER/ADMIN/SUPER_ADMIN users have no profile.
+/// At least one of email/phone must be set (CHECK in the integrity migration). Emails are
+/// stored lower-cased (CHECK). Phone is the primary identifier for most students.
+model User {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  email              String?   @unique
+  phone              String?   @unique
+  passwordHash       String
+  fullName           String
+  role               Role
+  isActive           Boolean   @default(true)
+  mustChangePassword Boolean   @default(false)
+  lastLoginAt        DateTime? @db.Timestamptz(3)
+  failedLoginCount   Int       @default(0)
+  lockedUntil        DateTime? @db.Timestamptz(3)
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt          DateTime? @db.Timestamptz(3)
+
+  student       Student?
+  instructor    Instructor?
+  refreshTokens RefreshToken[]
+  authTokens    AuthToken[]
+  notifications Notification[]
+  auditLogs     AuditLog[]
+
+  paymentsRecorded Payment[]         @relation("PaymentRecordedBy")
+  lessonsCreated   Lesson[]          @relation("LessonCreatedBy")
+  reviewsModerated Review[]          @relation("ReviewModeratedBy")
+  settingsUpdated  BusinessSetting[] @relation("SettingUpdatedBy")
+
+  @@index([role, isActive])
+}
+
+/// Opaque refresh tokens. Only a SHA-256 hash is stored. Tokens rotate on every use and
+/// belong to a family so reuse of a revoked token can revoke the whole family.
+model RefreshToken {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  userId       String    @db.Uuid
+  tokenHash    String    @unique
+  familyId     String    @db.Uuid
+  expiresAt    DateTime  @db.Timestamptz(3)
+  revokedAt    DateTime? @db.Timestamptz(3)
+  replacedById String?   @db.Uuid
+  userAgent    String?
+  ipAddress    String?
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([familyId])
+  @@index([expiresAt])
+}
+
+/// One-time, hashed tokens for password reset and staff/student invites.
+model AuthToken {
+  id        String        @id @default(uuid(7)) @db.Uuid
+  userId    String        @db.Uuid
+  type      AuthTokenType
+  tokenHash String        @unique
+  expiresAt DateTime      @db.Timestamptz(3)
+  usedAt    DateTime?     @db.Timestamptz(3)
+  createdAt DateTime      @default(now()) @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Organisation
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Branch {
+  id           String    @id @default(uuid(7)) @db.Uuid
+  name         String    @unique
+  slug         String    @unique
+  address      String?
+  phone        String?
+  mapUrl       String?
+  displayOrder Int       @default(0)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime  @updatedAt @db.Timestamptz(3)
+
+  students    Student[]
+  instructors Instructor[]
+  vehicles    Vehicle[]
+  enquiries   Enquiry[]
+}
+
+model Student {
+  id                    String        @id @default(uuid(7)) @db.Uuid
+  userId                String        @unique @db.Uuid
+  branchId              String        @db.Uuid
+  dateOfBirth           DateTime?     @db.Date
+  gender                Gender?
+  address               String?
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  /// Learner's licence number as issued by the RTA. Never store Aadhaar or document scans.
+  learnerLicenseNo      String?
+  status                StudentStatus @default(ACTIVE)
+  notes                 String?
+  createdAt             DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt             DateTime?     @db.Timestamptz(3)
+
+  user        User         @relation(fields: [userId], references: [id])
+  branch      Branch       @relation(fields: [branchId], references: [id])
+  enrollments Enrollment[]
+  bookings    Booking[]
+  lessons     Lesson[]
+  payments    Payment[]
+  reviews     Review[]
+  rtaRequests RtaRequest[]
+  enquiry     Enquiry?
+
+  @@index([branchId, status])
+}
+
+model Instructor {
+  id              String    @id @default(uuid(7)) @db.Uuid
+  userId          String    @unique @db.Uuid
+  branchId        String    @db.Uuid
+  bio             String?
+  experienceYears Int?
+  licenseNo       String?
+  gender          Gender?
+  isActive        Boolean   @default(true)
+  /// Only instructors the owner explicitly marks are shown on the public website.
+  showOnWebsite   Boolean   @default(false)
+  createdAt       DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt       DateTime? @db.Timestamptz(3)
+
+  user             User                  @relation(fields: [userId], references: [id])
+  branch           Branch                @relation(fields: [branchId], references: [id])
+  vehicles         Vehicle[]
+  lessons          Lesson[]
+  bookings         Booking[]
+  availability     InstructorAvailability[]
+  timeOff          InstructorTimeOff[]
+
+  @@index([branchId, isActive])
+}
+
+/// Weekly recurring working window. `dayOfWeek` 0 = Sunday … 6 = Saturday.
+/// Times are minutes from local (Asia/Kolkata) midnight, 0–1440.
+model InstructorAvailability {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  instructorId String   @db.Uuid
+  dayOfWeek    Int
+  startMinute  Int
+  endMinute    Int
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@index([instructorId, dayOfWeek])
+}
+
+model InstructorTimeOff {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  instructorId String   @db.Uuid
+  startAt      DateTime @db.Timestamptz(3)
+  endAt        DateTime @db.Timestamptz(3)
+  reason       String?
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+
+  instructor Instructor @relation(fields: [instructorId], references: [id], onDelete: Cascade)
+
+  @@index([instructorId, startAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Fleet
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Vehicle {
+  id                  String        @id @default(uuid(7)) @db.Uuid
+  branchId            String        @db.Uuid
+  registrationNumber  String        @unique
+  make                String?
+  model               String
+  type                VehicleType
+  transmission        Transmission
+  status              VehicleStatus @default(AVAILABLE)
+  /// Optional default instructor. A vehicle belongs to one branch; an instructor may have several vehicles.
+  assignedInstructorId String?      @db.Uuid
+  insuranceProvider   String?
+  insurancePolicyNo   String?
+  insuranceExpiry     DateTime?     @db.Date
+  pucExpiry           DateTime?     @db.Date
+  serviceDueDate      DateTime?     @db.Date
+  notes               String?
+  showOnWebsite       Boolean       @default(false)
+  createdAt           DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt           DateTime?     @db.Timestamptz(3)
+
+  branch             Branch                 @relation(fields: [branchId], references: [id])
+  assignedInstructor Instructor?            @relation(fields: [assignedInstructorId], references: [id], onDelete: SetNull)
+  lessons            Lesson[]
+  serviceRecords     VehicleServiceRecord[]
+
+  @@index([branchId, status])
+  @@index([assignedInstructorId])
+}
+
+model VehicleServiceRecord {
+  id                 String    @id @default(uuid(7)) @db.Uuid
+  vehicleId          String    @db.Uuid
+  serviceDate        DateTime  @db.Date
+  serviceType        String
+  costPaise          Int?
+  odometerKm         Int?
+  nextServiceDueDate DateTime? @db.Date
+  notes              String?
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId, serviceDate])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Catalogue (owner-managed, served to the public website)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Package {
+  id                    String        @id @default(uuid(7)) @db.Uuid
+  name                  String
+  slug                  String        @unique
+  description           String?
+  pricePaise            Int
+  lessonCount           Int
+  lessonDurationMinutes Int
+  vehicleType           VehicleType
+  /// Days a purchased package stays usable. Null = no expiry.
+  validityDays          Int?
+  features              String[]
+  displayOrder          Int           @default(0)
+  status                ContentStatus @default(DRAFT)
+  createdAt             DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt             DateTime?     @db.Timestamptz(3)
+
+  enrollments Enrollment[]
+  enquiries   Enquiry[]
+
+  @@index([status, displayOrder])
+}
+
+model RtaService {
+  id                String        @id @default(uuid(7)) @db.Uuid
+  name              String
+  slug              String        @unique
+  description       String?
+  /// Null when the fee is not fixed or not published.
+  pricePaise        Int?
+  requiredDocuments String[]
+  displayOrder      Int           @default(0)
+  status            ContentStatus @default(DRAFT)
+  createdAt         DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt         DateTime?     @db.Timestamptz(3)
+
+  requests RtaRequest[]
+
+  @@index([status, displayOrder])
+}
+
+model Skill {
+  id           String   @id @default(uuid(7)) @db.Uuid
+  name         String   @unique
+  category     String?
+  description  String?
+  displayOrder Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @db.Timestamptz(3)
+
+  progress LessonProgress[]
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sales pipeline: Enquiry → Student + Enrollment → Booking → Lesson
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A public (or staff-entered) lead. No login required. Personal data is collected only
+/// with recorded consent.
+model Enquiry {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  fullName           String
+  phone              String
+  email              String?
+  packageId          String?        @db.Uuid
+  preferredBranchId  String?        @db.Uuid
+  preferredDate      DateTime?      @db.Date
+  preferredTimeWindow TimeWindow?
+  pickupRequested    Boolean        @default(false)
+  pickupAddress      String?
+  message            String?
+  source             EnquirySource  @default(WEBSITE)
+  status             EnquiryStatus  @default(NEW)
+  consentGivenAt     DateTime       @db.Timestamptz(3)
+  internalNotes      String?
+  convertedStudentId String?        @unique @db.Uuid
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
+
+  package          Package? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+  preferredBranch  Branch?  @relation(fields: [preferredBranchId], references: [id], onDelete: SetNull)
+  convertedStudent Student? @relation(fields: [convertedStudentId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([phone])
+}
+
+/// A student's purchase of a package. Price, lesson count and duration are SNAPSHOTS so that
+/// later edits to the Package never rewrite history. Lessons remaining and balance are derived
+/// (from Lesson and Payment rows) rather than stored, so they cannot drift.
+model Enrollment {
+  id                    String           @id @default(uuid(7)) @db.Uuid
+  studentId             String           @db.Uuid
+  packageId             String           @db.Uuid
+  pricePaise            Int
+  lessonCount           Int
+  lessonDurationMinutes Int
+  startDate             DateTime         @db.Date
+  expiresOn             DateTime?        @db.Date
+  status                EnrollmentStatus @default(ACTIVE)
+  notes                 String?
+  createdAt             DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime         @updatedAt @db.Timestamptz(3)
+
+  student  Student   @relation(fields: [studentId], references: [id])
+  package  Package   @relation(fields: [packageId], references: [id])
+  bookings Booking[]
+  lessons  Lesson[]
+  payments Payment[]
+
+  /// Target of the composite foreign keys that guarantee child rows' studentId matches.
+  @@unique([id, studentId])
+  @@index([studentId, status])
+  @@index([packageId])
+}
+
+/// A request/reservation for a lesson slot. Becomes a Lesson when staff confirm it
+/// and assign an instructor and vehicle.
+model Booking {
+  id                    String        @id @default(uuid(7)) @db.Uuid
+  enrollmentId          String        @db.Uuid
+  studentId             String        @db.Uuid
+  requestedStartAt      DateTime      @db.Timestamptz(3)
+  pickupRequired        Boolean       @default(false)
+  pickupAddress         String?
+  preferredInstructorId String?       @db.Uuid
+  status                BookingStatus @default(REQUESTED)
+  notes                 String?
+  cancelledAt           DateTime?     @db.Timestamptz(3)
+  cancellationReason    String?
+  createdAt             DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime      @updatedAt @db.Timestamptz(3)
+
+  student             Student     @relation(fields: [studentId], references: [id])
+  enrollment          Enrollment  @relation(fields: [enrollmentId, studentId], references: [id, studentId])
+  preferredInstructor Instructor? @relation(fields: [preferredInstructorId], references: [id], onDelete: SetNull)
+  lesson              Lesson?
+
+  @@index([studentId, status])
+  @@index([status, requestedStartAt])
+  @@index([enrollmentId])
+}
+
+/// A scheduled session. Overlaps for the same instructor or the same vehicle are rejected by
+/// PostgreSQL EXCLUDE constraints (see the integrity migration), not just by application code.
+model Lesson {
+  id                 String       @id @default(uuid(7)) @db.Uuid
+  enrollmentId       String       @db.Uuid
+  studentId          String       @db.Uuid
+  bookingId          String?      @unique @db.Uuid
+  instructorId       String       @db.Uuid
+  vehicleId          String       @db.Uuid
+  startAt            DateTime     @db.Timestamptz(3)
+  endAt              DateTime     @db.Timestamptz(3)
+  status             LessonStatus @default(SCHEDULED)
+  pickupRequired     Boolean      @default(false)
+  pickupAddress      String?
+  instructorNotes    String?
+  nextFocus          String?
+  completedAt        DateTime?    @db.Timestamptz(3)
+  cancelledAt        DateTime?    @db.Timestamptz(3)
+  cancellationReason String?
+  createdById        String?      @db.Uuid
+  createdAt          DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime     @updatedAt @db.Timestamptz(3)
+
+  student    Student          @relation(fields: [studentId], references: [id])
+  enrollment Enrollment       @relation(fields: [enrollmentId, studentId], references: [id, studentId])
+  booking    Booking?         @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  instructor Instructor       @relation(fields: [instructorId], references: [id])
+  vehicle    Vehicle          @relation(fields: [vehicleId], references: [id])
+  createdBy  User?            @relation("LessonCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  progress   LessonProgress[]
+
+  @@index([instructorId, startAt])
+  @@index([vehicleId, startAt])
+  @@index([studentId, startAt])
+  @@index([enrollmentId])
+  @@index([status, startAt])
+}
+
+/// Instructor-entered rating of one skill in one lesson (1–5, CHECK in the integrity migration).
+model LessonProgress {
+  id                String   @id @default(uuid(7)) @db.Uuid
+  lessonId          String   @db.Uuid
+  skillId           String   @db.Uuid
+  rating            Int
+  note              String?
+  needsImprovement  Boolean  @default(false)
+  createdAt         DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(3)
+
+  lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  skill  Skill  @relation(fields: [skillId], references: [id])
+
+  @@unique([lessonId, skillId])
+  @@index([skillId])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Money
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// A payment attempt/record. Amounts are integer paise. "Partial payment" is a property of an
+/// Enrollment's balance (price − sum of PAID payments), not of a single Payment row.
+/// Payment logic is isolated behind a PaymentProvider interface (MANUAL now, RAZORPAY later).
+model Payment {
+  id                String          @id @default(uuid(7)) @db.Uuid
+  studentId         String          @db.Uuid
+  enrollmentId      String          @db.Uuid
+  amountPaise       Int
+  currency          String          @default("INR")
+  method            PaymentMethod
+  status            PaymentStatus   @default(PENDING)
+  provider          PaymentProvider @default(MANUAL)
+  providerOrderId   String?
+  providerPaymentId String?
+  referenceNumber   String?
+  paidAt            DateTime?       @db.Timestamptz(3)
+  refundedAt        DateTime?       @db.Timestamptz(3)
+  recordedById      String?         @db.Uuid
+  notes             String?
+  createdAt         DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime        @updatedAt @db.Timestamptz(3)
+
+  student    Student    @relation(fields: [studentId], references: [id])
+  enrollment Enrollment @relation(fields: [enrollmentId, studentId], references: [id, studentId])
+  recordedBy User?      @relation("PaymentRecordedBy", fields: [recordedById], references: [id], onDelete: SetNull)
+
+  @@unique([provider, providerPaymentId])
+  @@index([studentId, paidAt])
+  @@index([enrollmentId, status])
+  @@index([status, createdAt])
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Reputation, RTA, communication, configuration, audit
+// ─────────────────────────────────────────────────────────────────────────────
+
+/// Reviews are only ever real feedback. Only APPROVED reviews are public.
+model Review {
+  id            String       @id @default(uuid(7)) @db.Uuid
+  studentId     String?      @db.Uuid
+  authorName    String
+  rating        Int
+  body          String
+  status        ReviewStatus @default(PENDING)
+  source        ReviewSource @default(STUDENT)
+  moderatedById String?      @db.Uuid
+  moderatedAt   DateTime?    @db.Timestamptz(3)
+  createdAt     DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime     @updatedAt @db.Timestamptz(3)
+
+  student     Student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+  moderatedBy User?    @relation("ReviewModeratedBy", fields: [moderatedById], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+}
+
+/// A customer's RTA task (linked to a student, or to walk-in contact details).
+model RtaRequest {
+  id            String           @id @default(uuid(7)) @db.Uuid
+  rtaServiceId  String           @db.Uuid
+  studentId     String?          @db.Uuid
+  contactName   String?
+  contactPhone  String?
+  status        RtaRequestStatus @default(NEW)
+  notes         String?
+  createdAt     DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime         @updatedAt @db.Timestamptz(3)
+
+  rtaService RtaService @relation(fields: [rtaServiceId], references: [id])
+  student    Student?   @relation(fields: [studentId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
+  @@index([studentId])
+}
+
+/// Doubles as the in-app inbox and the outbound queue (outbox pattern). A dispatcher sends
+/// PENDING rows through a NotificationChannel provider; IN_APP rows are created as SENT.
+model Notification {
+  id           String              @id @default(uuid(7)) @db.Uuid
+  userId       String?             @db.Uuid
+  /// Email address / phone number for outbound messages to people without a User.
+  recipient    String?
+  channel      NotificationChannel
+  template     String
+  payload      Json
+  status       NotificationStatus  @default(PENDING)
+  scheduledFor DateTime            @default(now()) @db.Timestamptz(3)
+  sentAt       DateTime?           @db.Timestamptz(3)
+  attempts     Int                 @default(0)
+  lastError    String?
+  readAt       DateTime?           @db.Timestamptz(3)
+  createdAt    DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt    DateTime            @updatedAt @db.Timestamptz(3)
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, scheduledFor])
+  @@index([userId, readAt])
+}
+
+/// Owner-editable key/value configuration. `isPublic` settings may be served by the public API.
+model BusinessSetting {
+  id          String   @id @default(uuid(7)) @db.Uuid
+  key         String   @unique
+  value       Json
+  isPublic    Boolean  @default(false)
+  description String?
+  updatedById String?  @db.Uuid
+  createdAt   DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(3)
+
+  updatedBy User? @relation("SettingUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+}
+
+/// Append-only record of sensitive actions (role changes, payments, refunds, settings…).
+model AuditLog {
+  id        String   @id @default(uuid(7)) @db.Uuid
+  actorId   String?  @db.Uuid
+  action    String
+  entity    String
+  entityId  String?
+  before    Json?
+  after     Json?
+  ipAddress String?
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  actor User? @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}

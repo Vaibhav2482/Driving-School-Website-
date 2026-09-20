@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/sora";
+
+/*
+ * Sri Sai Balaji design tokens.
+ *
+ * Direction (from the client's business card, modernised):
+ *   brand   – deep navy/royal blue. The structural colour: headers, hero, footer, primary buttons.
+ *   accent  – red. RESERVED for the primary call to action and small highlights. Never a background wash.
+ *   signal  – road-sign yellow. A very small accent (badges, highlights), never a surface.
+ *   sand    – warm neutrals for canvas, borders and muted text.
+ *
+ * Use the semantic aliases (canvas, surface, ink, muted, line) in components; use the raw scales
+ * only where a specific step is needed. Contrast notes: white on brand-800/900 and on accent-600
+ * both exceed WCAG AA for normal text; ink on canvas and muted on white exceed 4.5:1.
+ */
+@theme {
+  --font-sans:
+    "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Sora Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #eef2fb;
+  --color-brand-100: #dce5f7;
+  --color-brand-200: #b9caef;
+  --color-brand-300: #8da6e0;
+  --color-brand-400: #5a78cb;
+  --color-brand-500: #3a55b0;
+  --color-brand-600: #2c4093;
+  --color-brand-700: #233377;
+  --color-brand-800: #1b285d;
+  --color-brand-900: #131c43;
+  --color-brand-950: #0b1230;
+
+  --color-accent-50: #fef2f1;
+  --color-accent-100: #fde3e1;
+  --color-accent-200: #fbc9c5;
+  --color-accent-300: #f7a19b;
+  --color-accent-400: #f0685f;
+  --color-accent-500: #e2352e;
+  --color-accent-600: #c92a25;
+  --color-accent-700: #a5201d;
+  --color-accent-800: #851e1e;
+  --color-accent-900: #6f1e1e;
+
+  --color-signal-100: #fff3c2;
+  --color-signal-300: #ffd84d;
+  --color-signal-400: #ffc629;
+  --color-signal-500: #f5b400;
+  --color-signal-700: #8a6400;
+
+  --color-sand-50: #faf8f5;
+  --color-sand-100: #f4f1ec;
+  --color-sand-200: #e9e4dc;
+  --color-sand-300: #d8d1c5;
+  --color-sand-400: #b5ac9c;
+  --color-sand-500: #8a8273;
+  --color-sand-600: #6a6357;
+  --color-sand-700: #4f4a41;
+  --color-sand-800: #37332d;
+  --color-sand-900: #24211d;
+
+  /* Status colours. Danger is deliberately a different red from the brand accent. */
+  --color-success-50: #ecf8f1;
+  --color-success-200: #b4e3c8;
+  --color-success-700: #14683f;
+  --color-danger-50: #fdf1f0;
+  --color-danger-200: #f5c2bd;
+  --color-danger-600: #b42318;
+  --color-danger-700: #93190f;
+  --color-warning-50: #fff8e6;
+  --color-warning-200: #fbe2a0;
+  --color-warning-800: #7a5300;
+
+  /* Semantic aliases */
+  --color-canvas: var(--color-sand-50);
+  --color-surface: #ffffff;
+  --color-ink: var(--color-brand-950);
+  --color-muted: var(--color-sand-600);
+  --color-line: var(--color-sand-200);
+  --color-line-strong: var(--color-sand-300);
+
+  --radius-control: 0.625rem;
+  --radius-card: 1rem;
+
+  /* Restrained elevation: hairline plus a whisper of shadow. */
+  --shadow-card: 0 1px 2px 0 rgb(19 28 67 / 0.05);
+  --shadow-overlay: 0 24px 48px -12px rgb(11 18 48 / 0.28);
+  /* Cards lifting on hover, and the trust strip: soft and low. */
+  --shadow-lift: 0 14px 32px -14px rgb(19 28 67 / 0.28), 0 2px 6px -2px rgb(19 28 67 / 0.08);
+
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --animate-fade-in: fade-in 160ms var(--ease-standard);
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+@layer base {
+  html {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.015em;
+    text-wrap: balance;
+  }
+
+  /* One consistent, always-visible keyboard focus indicator. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--color-brand-200);
+  }
+
+  dialog::backdrop {
+    background-color: rgb(11 18 48 / 0.55);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

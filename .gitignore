@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Environment files: never commit real configuration or secrets.
+# Only the *.example templates (placeholders) are tracked.
+.env
+.env.*
+!.env.example
+
+# Build output
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Prisma generated client (recreated by `prisma generate`)
+server/src/generated/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# Local database dumps and uploads
+*.sql.gz
+*.dump
+uploads/
+
+# Key material
+*.pem
+*.key
+
+# Claude Code local settings
+.claude/settings.local.json
+
+# Vercel local project link
+.vercel
+
+.vercel

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sri Sai Balaji Driving School">
+  <!-- Temporary placeholder mark. Replace with the client's real logo when a vector/hi-res file is supplied. -->
+  <rect width="64" height="64" rx="14" fill="#131c43" />
+  <circle cx="32" cy="32" r="16" fill="none" stroke="#ffffff" stroke-width="5" />
+  <circle cx="32" cy="32" r="4" fill="#e2352e" />
+  <path d="M32 36v12M28 32H16M36 32h12" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+</svg>

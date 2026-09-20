@@ -1,0 +1,16 @@
+{
+  "printWidth": 100,
+  "singleQuote": false,
+  "trailingComma": "all",
+  "semi": true,
+  "overrides": [
+    {
+      "files": "client/**/*.{ts,tsx}",
+      "options": {
+        "plugins": ["prettier-plugin-tailwindcss"],
+        "tailwindStylesheet": "./client/src/styles/index.css",
+        "tailwindFunctions": ["cn"]
+      }
+    }
+  ]
+}
