@@ -3,7 +3,7 @@ import { addDays, format } from "date-fns";
 import {
   enquiryFormSchema,
   isValidIndianMobile,
-  toEnquiryPayload,
+  toEnquiryDetails,
   type EnquiryFormValues,
 } from "./schema";
 
@@ -16,8 +16,6 @@ const base: EnquiryFormValues = {
   preferredTimeWindow: "",
   pickupAddress: "",
   message: "",
-  consent: true,
-  website: "",
 };
 
 const issues = (values: Partial<EnquiryFormValues>) => {
@@ -26,13 +24,12 @@ const issues = (values: Partial<EnquiryFormValues>) => {
 };
 
 describe("enquiry form validation", () => {
-  it("accepts a minimal valid enquiry (name, phone, consent)", () => {
+  it("accepts a minimal valid enquiry (name and phone)", () => {
     expect(issues({})).toEqual([]);
   });
 
-  it("requires a name, a valid phone and consent", () => {
-    expect(issues({ fullName: "", phone: "", consent: false }).sort()).toEqual([
-      "consent: Please tick the box to let us contact you.",
+  it("requires a name and a phone", () => {
+    expect(issues({ fullName: "", phone: "" }).sort()).toEqual([
       "fullName: Please enter your name.",
       "phone: Please enter your mobile number.",
     ]);
@@ -60,19 +57,17 @@ describe("enquiry form validation", () => {
   });
 });
 
-describe("toEnquiryPayload", () => {
+describe("toEnquiryDetails", () => {
   it("leaves out everything the visitor did not fill in", () => {
-    expect(toEnquiryPayload(base)).toEqual({
+    expect(toEnquiryDetails(base)).toEqual({
       fullName: "Asha Reddy",
       phone: "96661 46913",
-      consent: true,
-      website: "",
     });
   });
 
   it("includes optional fields when they are filled in and trims whitespace", () => {
     expect(
-      toEnquiryPayload({
+      toEnquiryDetails({
         ...base,
         fullName: "  Asha Reddy ",
         packageSlug: "test-plan",
@@ -81,8 +76,9 @@ describe("toEnquiryPayload", () => {
         pickupAddress: " Flat 4 ",
         message: "Hello",
       }),
-    ).toMatchObject({
+    ).toEqual({
       fullName: "Asha Reddy",
+      phone: "96661 46913",
       packageSlug: "test-plan",
       preferredBranchSlug: "kondapur",
       preferredTimeWindow: "EVENING",

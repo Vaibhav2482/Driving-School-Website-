@@ -8,7 +8,6 @@ export function PublicNotFoundPage() {
       <NotFoundState
         title="We couldn't find that page"
         message="The link may be broken, or the page may have moved."
-        primaryAction={{ to: "/packages", label: "See our packages" }}
       />
     </>
   );

@@ -1,7 +1,7 @@
 /**
- * Brand assets. Both are `null` today because the client has not yet supplied a high-resolution or
- * vector logo, or real photography. While `null`, the site renders a temporary text logo treatment and a
- * designed vector illustration.
+ * Brand assets. The logo is `null` today because the client has not yet supplied a high-resolution or
+ * vector logo, so the site renders a temporary text logo treatment. (Website photography lives in
+ * `config/photos.ts`.)
  *
  * TO REPLACE WITH REAL ASSETS: drop the file into `client/src/assets/` (or `client/public/`), import it
  * (or use a `/public` URL), and set it below. No component needs to change.
@@ -19,6 +19,3 @@ export interface BrandImage {
 
 /** The client's real logo. `null` = use the temporary text logo. */
 export const brandLogo: BrandImage | null = null;
-
-/** Hero photograph (a real photo of a car or training on the road). `null` = use the vector illustration. */
-export const heroImage: BrandImage | null = null;

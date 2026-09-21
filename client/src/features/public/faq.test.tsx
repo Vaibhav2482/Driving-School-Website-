@@ -29,13 +29,13 @@ describe("buildFaq", () => {
     expect(answer).not.toMatch(/₹|Rs\.?\s?\d|\d+\s?rupees/i);
   });
 
-  it("links to the packages page only when plans exist", () => {
+  it("links to the plans section only when plans exist", () => {
     expect(
       text(buildFaq(BUSINESS_DEFAULTS, false).find((i) => /cost/i.test(i.question))?.answer),
-    ).not.toMatch(/Packages page/);
+    ).not.toMatch(/Plans section/);
     expect(
       text(buildFaq(BUSINESS_DEFAULTS, true).find((i) => /cost/i.test(i.question))?.answer),
-    ).toMatch(/Packages page/);
+    ).toMatch(/Plans section/);
   });
 
   it("only claims government recognition when the owner-managed setting has it", () => {

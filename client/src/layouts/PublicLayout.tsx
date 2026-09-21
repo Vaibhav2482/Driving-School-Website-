@@ -1,5 +1,6 @@
 import { Outlet } from "react-router";
 import { BusinessJsonLd } from "@/components/site/BusinessJsonLd";
+import { FloatingWhatsApp } from "@/components/site/FloatingWhatsApp";
 import { MobileActionBar } from "@/components/site/MobileActionBar";
 import { NavigationProgress } from "@/components/site/NavigationProgress";
 import { ScrollToTop } from "@/components/site/ScrollToTop";
@@ -10,7 +11,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 export function PublicLayout() {
   return (
     // Bottom padding on phones keeps the footer clear of the sticky action bar.
-    <div className="flex min-h-dvh flex-col pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0">
+    <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-control focus:bg-surface focus:px-4 focus:py-2 focus:font-semibold focus:shadow-overlay"
@@ -27,6 +28,7 @@ export function PublicLayout() {
       </main>
       <SiteFooter />
       <MobileActionBar />
+      <FloatingWhatsApp />
     </div>
   );
 }

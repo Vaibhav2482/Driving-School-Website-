@@ -38,7 +38,7 @@ export function Seo({ title, absoluteTitle, description, path, noIndex }: SeoPro
       {description && <meta property="og:description" content={description} />}
       {url && <meta property="og:url" content={url} />}
 
-      <meta name="twitter:card" content="summary" />
+      <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:title" content={fullTitle} />
       {description && <meta name="twitter:description" content={description} />}
 

@@ -37,7 +37,7 @@ export function FormField({ label, error, hint, required, className, children }:
       <label htmlFor={id} className="block text-sm font-medium text-ink">
         {label}
         {required && (
-          <span aria-hidden="true" className="ml-0.5 text-accent-600">
+          <span aria-hidden="true" className="ml-0.5 text-accent-700">
             *
           </span>
         )}

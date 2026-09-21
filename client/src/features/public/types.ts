@@ -1,4 +1,4 @@
-/** Shapes returned by `/api/v1/public/*`. Mirrors the server allow-lists in catalog.service.ts. */
+/** Shapes of the website content (see content.ts). */
 
 export type VehicleType = "CAR" | "TWO_WHEELER" | "OTHER";
 export type TimeWindow = "MORNING" | "AFTERNOON" | "EVENING";
@@ -37,22 +37,4 @@ export interface PublicReview {
   /** 1 to 5 */
   rating: number;
   body: string;
-}
-
-/** Flat `{ "business.name": …, … }` map of settings the owner marked public. */
-export type PublicSettings = Record<string, unknown>;
-
-/** Body of `POST /public/enquiries`. */
-export interface EnquiryPayload {
-  fullName: string;
-  phone: string;
-  packageSlug?: string;
-  preferredBranchSlug?: string;
-  preferredDate?: string;
-  preferredTimeWindow?: TimeWindow;
-  pickupAddress?: string;
-  message?: string;
-  consent: true;
-  /** Honeypot: must stay empty. */
-  website?: string;
 }

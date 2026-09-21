@@ -1,28 +1,25 @@
-import { MessageCircle, Phone } from "lucide-react";
-import { Link, useLocation } from "react-router";
+import { ArrowRight, Phone } from "lucide-react";
+import { WhatsAppIcon } from "@/components/common/WhatsAppIcon";
 import { buttonStyles } from "@/components/ui/button-styles";
+import { sectionHref } from "@/config/public-nav";
 import { getPrimaryPhone, getWhatsappNumber } from "@/features/public/business";
 import { useBusinessInfo } from "@/features/public/hooks";
 import { telHref, whatsappHref, WHATSAPP_MESSAGES } from "@/lib/contact";
 
 /**
  * Sticky bottom bar on phones: Call, WhatsApp and Book are always one thumb-tap away. Hidden from
- * 768px up (the header carries these actions there) and on the enquiry page, where it would cover
- * the form's submit button.
+ * 768px up (the header carries these actions there).
  */
 export function MobileActionBar() {
-  const { pathname } = useLocation();
   const business = useBusinessInfo();
   const phone = getPrimaryPhone(business);
   const whatsapp = getWhatsappNumber(business);
 
-  if (pathname.startsWith("/book")) return null;
-
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] md:hidden">
-      <div className="grid grid-cols-3 gap-2 p-2.5">
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t-2 border-accent-500 bg-brand-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
+      <div className="grid grid-cols-[1fr_1.35fr_1.15fr] gap-2 p-2.5">
         {phone && (
-          <a href={telHref(phone)} className={buttonStyles({ variant: "secondary", size: "md" })}>
+          <a href={telHref(phone)} className={buttonStyles({ variant: "inverse", size: "md" })}>
             <Phone aria-hidden="true" className="size-4" />
             Call
           </a>
@@ -32,15 +29,19 @@ export function MobileActionBar() {
             href={whatsappHref(whatsapp, WHATSAPP_MESSAGES.general)}
             target="_blank"
             rel="noopener noreferrer"
-            className={buttonStyles({ variant: "primary", size: "md" })}
+            className={buttonStyles({ variant: "whatsapp", size: "md" })}
           >
-            <MessageCircle aria-hidden="true" className="size-4" />
+            <WhatsAppIcon className="size-4" />
             WhatsApp
           </a>
         )}
-        <Link to="/book" className={buttonStyles({ variant: "accent", size: "md" })}>
+        <a
+          href={sectionHref("contact")}
+          className={buttonStyles({ variant: "accent", size: "md" })}
+        >
           Book
-        </Link>
+          <ArrowRight aria-hidden="true" className="size-4" />
+        </a>
       </div>
     </div>
   );
