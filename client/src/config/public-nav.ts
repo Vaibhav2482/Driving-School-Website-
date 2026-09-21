@@ -1,22 +1,22 @@
-export interface PublicNavLink {
-  to: string;
+/**
+ * The website is ONE page. Each nav entry scrolls to a section of the home page by its element id
+ * (see pages/public/HomePage.tsx). The `href` is absolute ("/#about") so the same links also work from the
+ * 404 page.
+ */
+export interface SectionLink {
+  /** The `id` of the section element. */
+  id: string;
   label: string;
-  end?: boolean;
 }
 
-/** Main navigation for the public website (header and mobile menu). */
-export const mainNav: PublicNavLink[] = [
-  { to: "/", label: "Home", end: true },
-  { to: "/about", label: "About" },
-  { to: "/courses", label: "Courses" },
-  { to: "/packages", label: "Packages" },
-  { to: "/rta-services", label: "RTA Services" },
-  { to: "/contact", label: "Contact" },
+export const sectionNav: SectionLink[] = [
+  { id: "about", label: "About" },
+  { id: "training", label: "Training" },
+  { id: "plans", label: "Plans" },
+  { id: "pickup", label: "Pickup" },
+  { id: "rta", label: "RTA" },
+  { id: "faq", label: "FAQ" },
+  { id: "contact", label: "Contact" },
 ];
 
-/** Extra links shown in the footer. */
-export const footerNav: PublicNavLink[] = [
-  ...mainNav,
-  { to: "/faq", label: "FAQ" },
-  { to: "/reviews", label: "Reviews" },
-];
+export const sectionHref = (id: string) => `/#${id}`;

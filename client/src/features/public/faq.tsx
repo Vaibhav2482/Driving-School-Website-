@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Link } from "react-router";
 import type { BusinessInfo } from "@/config/business-defaults";
 
 export interface FaqItem {
@@ -42,12 +41,12 @@ export function buildFaq(business: BusinessInfo, hasPackages: boolean): FaqItem[
             <>
               {" "}
               You can also see our current plans on the{" "}
-              <Link
-                to="/packages"
-                className="font-semibold text-brand-800 underline underline-offset-2"
+              <a
+                href="/#plans"
+                className="font-semibold text-brand-900 underline underline-offset-2"
               >
-                Packages page
-              </Link>
+                Plans section
+              </a>
               .
             </>
           )}
@@ -64,9 +63,9 @@ export function buildFaq(business: BusinessInfo, hasPackages: boolean): FaqItem[
       answer: (
         <>
           Send us an enquiry using the{" "}
-          <Link to="/book" className="font-semibold text-brand-800 underline underline-offset-2">
+          <a href="/#contact" className="font-semibold text-brand-900 underline underline-offset-2">
             enquiry form
-          </Link>
+          </a>
           , call us, or message us on WhatsApp. We&apos;ll get in touch to take it forward.
         </>
       ),

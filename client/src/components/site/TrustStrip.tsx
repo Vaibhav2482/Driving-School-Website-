@@ -1,4 +1,4 @@
-import { House, MapPin, ShieldCheck, Users, type LucideIcon } from "lucide-react";
+import { CalendarCheck, GraduationCap, MapPin, ShieldCheck, type LucideIcon } from "lucide-react";
 import { useBusinessInfo } from "@/features/public/hooks";
 import { Container } from "./Container";
 import { Reveal } from "./Reveal";
@@ -10,8 +10,8 @@ interface TrustItem {
 }
 
 /**
- * A concise strip of confirmed facts, straight after the hero. No numbers, ratings or statistics.
- * The recognition line comes from the owner-managed settings and disappears if the owner removes it.
+ * A concise ledger of confirmed facts directly under the hero, on black with fine gold rules. No numbers,
+ * ratings or statistics. The recognition line comes from the business details and disappears if it is removed.
  */
 export function TrustStrip() {
   const { recognition } = useBusinessInfo();
@@ -20,26 +20,22 @@ export function TrustStrip() {
     ...(recognition
       ? [{ icon: ShieldCheck, title: "Government recognised", text: recognition }]
       : []),
-    { icon: Users, title: "Ladies & Gents", text: "Driving training for everyone" },
-    { icon: House, title: "House pickup & drop", text: "Convenient lessons, from home" },
     { icon: MapPin, title: "Two branches", text: "Kondapur & Hafeezpet" },
+    { icon: CalendarCheck, title: "Book your way", text: "Call, WhatsApp or send an enquiry" },
+    { icon: GraduationCap, title: "Hands-on lessons", text: "Real road practice, step by step" },
   ];
 
   return (
-    <div className="relative z-10 -mt-8 sm:-mt-10">
+    <div className="relative border-y border-accent-500/25 bg-brand-950 text-white">
       <Container>
         <Reveal>
-          <ul className="grid divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface shadow-lift sm:grid-cols-2 sm:divide-y-0 lg:grid-cols-4 lg:divide-x">
+          <ul className="grid divide-y divide-white/10 sm:grid-cols-2 sm:divide-y-0 lg:auto-cols-fr lg:grid-flow-col lg:divide-x">
             {items.map(({ icon: Icon, title, text }) => (
-              <li key={title} className="flex items-center gap-4 p-5 sm:p-6">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-brand-50 text-brand-700">
-                  <Icon aria-hidden="true" className="size-5" />
-                </span>
+              <li key={title} className="flex items-center gap-4 py-7 sm:px-7 lg:first:pl-0">
+                <Icon aria-hidden="true" className="size-7 shrink-0 text-accent-400" />
                 <div className="min-w-0">
-                  <p className="font-display text-[15px] leading-tight font-semibold text-ink">
-                    {title}
-                  </p>
-                  <p className="mt-1 text-sm leading-snug text-muted">{text}</p>
+                  <p className="font-display text-lg leading-tight font-semibold">{title}</p>
+                  <p className="mt-1 text-sm leading-snug text-sand-300">{text}</p>
                 </div>
               </li>
             ))}

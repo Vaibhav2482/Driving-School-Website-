@@ -1,12 +1,7 @@
 /**
- * FALLBACK ONLY. The source of truth for business details is the database (BusinessSetting), edited by
- * the owner and served by `GET /api/v1/public/settings`.
- *
- * These values are the facts printed on the client's business card. They are shown ONLY while the API
- * response is loading, unreachable, or missing a key, so the most important actions (call, WhatsApp,
- * find us) never disappear from the site. As soon as the API answers, its values win.
- *
- * Do not add anything the client has not confirmed. Unknown values are `null` / empty.
+ * The business facts printed on the client's business card. This is the confirmed source for the website
+ * (see features/public/content.ts). Do not add anything the client has not confirmed: unknown values are
+ * `null` or empty, and the site simply leaves them out.
  */
 export interface BusinessPhone {
   /** E.164, e.g. +919666146913 */
@@ -49,6 +44,3 @@ export const BUSINESS_DEFAULTS: BusinessInfo = {
   email: null,
   workingHours: null,
 };
-
-/** Branch names are confirmed; used only to describe the business when the branch list is unavailable. */
-export const FALLBACK_BRANCH_NAMES = ["Kondapur", "Hafeezpet"] as const;

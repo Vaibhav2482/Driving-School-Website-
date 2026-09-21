@@ -1,7 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Sri Sai Balaji Driving School">
-  <!-- Temporary placeholder mark. Replace with the client's real logo when a vector/hi-res file is supplied. -->
-  <rect width="64" height="64" rx="14" fill="#131c43" />
-  <circle cx="32" cy="32" r="16" fill="none" stroke="#ffffff" stroke-width="5" />
-  <circle cx="32" cy="32" r="4" fill="#e2352e" />
-  <path d="M32 36v12M28 32H16M36 32h12" stroke="#ffffff" stroke-width="4" stroke-linecap="round" />
+  <!-- Temporary mark: a red sports car on carbon black. Replace with the client's real logo when supplied. -->
+  <rect width="64" height="64" rx="12" fill="#0c0d0f" />
+  <g transform="translate(4 19) scale(.31)" fill="none" stroke="#e5251b" stroke-linecap="round" stroke-linejoin="round" stroke-width="7">
+    <path d="M6 55C6 52 12 50.500 24 48.500C44 45 66 40 86 34.500C97 27 110 23.500 126 24C144 24.500 158 31 176 37.500L185 35.500L185 54L166 57"/>
+    <path d="M137 57H67M37 57H16C10 57 6.500 56.500 6 55M67 57A15 15 0 0 0 37 57M166 57A15 15 0 0 0 137 57"/>
+    <circle cx="52" cy="60" r="10.500"/><circle cx="152" cy="60" r="10.500"/>
+  </g>
 </svg>

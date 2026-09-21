@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { todayInBusinessTimezone } from "@/lib/time";
-import type { EnquiryPayload, TimeWindow } from "@/features/public/types";
+import type { TimeWindow } from "@/features/public/types";
 
 /** Client-side mirror of the server's rule (Indian mobile, optional +91/91/0 prefix). UX only: the API re-validates. */
 export function isValidIndianMobile(value: string): boolean {
@@ -37,17 +37,25 @@ export const enquiryFormSchema = z.object({
   preferredTimeWindow: z.enum(["", "MORNING", "AFTERNOON", "EVENING"]),
   pickupAddress: z.string().max(300, "Please keep this under 300 characters."),
   message: z.string().max(1000, "Please keep this under 1000 characters."),
-  consent: z.boolean().refine((value) => value, "Please tick the box to let us contact you."),
-  /** Honeypot. Real visitors never see this field, so it stays empty. */
-  website: z.string(),
 });
 
 export type EnquiryFormValues = z.infer<typeof enquiryFormSchema>;
 
 const blankToUndefined = (value: string): string | undefined => value.trim() || undefined;
 
-/** Convert form values to the API body, leaving out anything the visitor did not fill in. */
-export function toEnquiryPayload(values: EnquiryFormValues): EnquiryPayload {
+/** What the visitor filled in, tidied up and without the blanks. Used to compose the WhatsApp message. */
+export interface EnquiryDetails {
+  fullName: string;
+  phone: string;
+  packageSlug?: string;
+  preferredBranchSlug?: string;
+  preferredDate?: string;
+  preferredTimeWindow?: TimeWindow;
+  pickupAddress?: string;
+  message?: string;
+}
+
+export function toEnquiryDetails(values: EnquiryFormValues): EnquiryDetails {
   return {
     fullName: values.fullName.trim(),
     phone: values.phone.trim(),
@@ -57,8 +65,6 @@ export function toEnquiryPayload(values: EnquiryFormValues): EnquiryPayload {
     preferredTimeWindow: (values.preferredTimeWindow || undefined) as TimeWindow | undefined,
     pickupAddress: blankToUndefined(values.pickupAddress),
     message: blankToUndefined(values.message),
-    consent: true,
-    website: values.website,
   };
 }
 

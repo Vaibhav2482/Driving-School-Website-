@@ -7,6 +7,7 @@ import {
   Users,
   type LucideIcon,
 } from "lucide-react";
+import { cn } from "@/lib/cn";
 import { Reveal } from "./Reveal";
 
 interface Reason {
@@ -49,20 +50,38 @@ const REASONS: Reason[] = [
   },
 ];
 
-export function WhyChooseUs() {
+/** An editorial, numbered list. `columns={2}` when it sits beside a photograph. */
+export function WhyChooseUs({ columns = 3 }: { columns?: 2 | 3 }) {
   return (
-    <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+    <ul
+      className={cn(
+        "grid gap-x-12 gap-y-2",
+        columns === 3 ? "sm:grid-cols-2 lg:grid-cols-3" : "sm:grid-cols-2",
+      )}
+    >
       {REASONS.map(({ icon: Icon, title, text }, index) => (
         <li key={title}>
-          <Reveal delay={(index % 3) * 70} className="h-full">
-            <div className="group flex h-full gap-4 rounded-2xl border border-line bg-surface p-5 transition duration-300 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lift sm:block sm:p-7">
-              <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-brand-900 text-white transition-colors group-hover:bg-accent-600 sm:size-12">
-                <Icon aria-hidden="true" className="size-6" />
-              </span>
-              <div>
-                <h3 className="font-display text-lg font-semibold text-ink sm:mt-5">{title}</h3>
-                <p className="mt-1.5 leading-relaxed text-muted sm:mt-2">{text}</p>
+          <Reveal delay={(index % 2) * 90}>
+            <div className="group relative border-t border-line-strong py-9 transition-colors duration-500">
+              {/* A gold rule that draws across the top edge on hover. */}
+              <span
+                aria-hidden="true"
+                className="absolute inset-x-0 -top-px h-px origin-left scale-x-0 bg-accent-500 transition-transform duration-700 group-hover:scale-x-100"
+              />
+              <div className="flex items-start justify-between gap-4">
+                <span
+                  aria-hidden="true"
+                  className="text-outline-accent font-display text-6xl leading-none font-medium transition-all duration-500 group-hover:text-accent-500"
+                >
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <Icon
+                  aria-hidden="true"
+                  className="mt-1 size-6 text-accent-700 opacity-70 transition-opacity duration-300 group-hover:opacity-100"
+                />
               </div>
+              <h3 className="mt-6 font-display text-2xl font-semibold text-ink">{title}</h3>
+              <p className="mt-3 leading-relaxed text-muted">{text}</p>
             </div>
           </Reveal>
         </li>

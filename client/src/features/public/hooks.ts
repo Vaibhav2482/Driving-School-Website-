@@ -1,71 +1,23 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import type { BusinessInfo } from "@/config/business-defaults";
-import { publicApi } from "./api";
-import { parseBusinessInfo } from "./business";
-
-/** Public catalogue data changes rarely; keep it fresh for a few minutes. */
-const STALE_MS = 5 * 60_000;
-
-export const publicKeys = {
-  packages: ["public", "packages"] as const,
-  package: (slug: string) => ["public", "packages", slug] as const,
-  branches: ["public", "branches"] as const,
-  settings: ["public", "settings"] as const,
-  rtaServices: ["public", "rta-services"] as const,
-  reviews: ["public", "reviews"] as const,
-};
-
-export const usePackages = () =>
-  useQuery({
-    queryKey: publicKeys.packages,
-    queryFn: ({ signal }) => publicApi.packages(signal),
-    staleTime: STALE_MS,
-  });
-
-export const usePackage = (slug: string) =>
-  useQuery({
-    queryKey: publicKeys.package(slug),
-    queryFn: ({ signal }) => publicApi.package(slug, signal),
-    staleTime: STALE_MS,
-  });
-
-export const useBranches = () =>
-  useQuery({
-    queryKey: publicKeys.branches,
-    queryFn: ({ signal }) => publicApi.branches(signal),
-    staleTime: STALE_MS,
-  });
-
-export const useRtaServices = () =>
-  useQuery({
-    queryKey: publicKeys.rtaServices,
-    queryFn: ({ signal }) => publicApi.rtaServices(signal),
-    staleTime: STALE_MS,
-  });
-
-export const useReviews = () =>
-  useQuery({
-    queryKey: publicKeys.reviews,
-    queryFn: ({ signal }) => publicApi.reviews(signal),
-    staleTime: STALE_MS,
-  });
-
-const usePublicSettings = () =>
-  useQuery({
-    queryKey: publicKeys.settings,
-    queryFn: ({ signal }) => publicApi.settings(signal),
-    staleTime: STALE_MS,
-  });
+import { getContent } from "./content";
+import type { PublicPackage } from "./types";
 
 /**
- * Business details (name, phones, address, …) from the owner-managed settings. Always returns usable
- * values: while loading, on failure, or for a missing key it falls back to the facts printed on the
- * business card (see config/business-defaults.ts), so click-to-call and WhatsApp never disappear.
+ * Content accessors for the pages. The data is static (see `content.ts`), so these return immediately: there
+ * is no loading or failure state.
  */
-export function useBusinessInfo(): BusinessInfo {
-  const { data } = usePublicSettings();
-  return useMemo(() => parseBusinessInfo(data), [data]);
-}
+const ready = <T>(data: T) => ({ data });
 
-export const useCreateEnquiry = () => useMutation({ mutationFn: publicApi.createEnquiry });
+export const usePackages = () => ready(getContent().packages);
+export const useBranches = () => ready(getContent().branches);
+export const useRtaServices = () => ready(getContent().rtaServices);
+export const useReviews = () => ready(getContent().reviews);
+
+/** One plan by its URL slug. `data` is `undefined` when there is no such plan. */
+export const usePackage = (slug: string) =>
+  ready<PublicPackage | undefined>(getContent().packages.find((p) => p.slug === slug));
+
+/** Business details (name, phones, address, …), confirmed from the business card. */
+export function useBusinessInfo(): BusinessInfo {
+  return getContent().business;
+}

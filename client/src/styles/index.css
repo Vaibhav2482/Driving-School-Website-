@@ -1,47 +1,51 @@
 @import "tailwindcss";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/sora";
+@import "@fontsource/barlow/400.css";
+@import "@fontsource/barlow/500.css";
+@import "@fontsource/barlow/600.css";
+@import "@fontsource/barlow/700.css";
+@import "@fontsource/barlow-condensed/700.css";
+@import "@fontsource/barlow-condensed/700-italic.css";
+@import "@fontsource/barlow-condensed/800.css";
+@import "@fontsource/barlow-condensed/800-italic.css";
 
 /*
- * Sri Sai Balaji design tokens.
+ * Sri Sai Balaji design tokens: "racing".
  *
- * Direction (from the client's business card, modernised):
- *   brand   – deep navy/royal blue. The structural colour: headers, hero, footer, primary buttons.
- *   accent  – red. RESERVED for the primary call to action and small highlights. Never a background wash.
- *   signal  – road-sign yellow. A very small accent (badges, highlights), never a surface.
- *   sand    – warm neutrals for canvas, borders and muted text.
+ *   brand   – carbon black. Header, dark bands, footer and body text.
+ *   accent  – racing red. Calls to action, eyebrows, numerals and highlights. Use 300/400 on carbon and 700 for
+ *             text on light backgrounds (500/600 are for fills, lines and icons).
+ *   sand    – cool silver neutrals for canvas, borders and muted text.
+ *   signal  – road-sign yellow, kept for star ratings and tiny highlights.
  *
- * Use the semantic aliases (canvas, surface, ink, muted, line) in components; use the raw scales
- * only where a specific step is needed. Contrast notes: white on brand-800/900 and on accent-600
- * both exceed WCAG AA for normal text; ink on canvas and muted on white exceed 4.5:1.
+ * Headings use Barlow Condensed in slanted uppercase (motorsport lettering); everything else is Barlow.
+ * Use the semantic aliases (canvas, surface, ink, muted, line) in components.
  */
 @theme {
-  --font-sans:
-    "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Sora Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Barlow", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", "Helvetica Neue", Arial, sans-serif;
 
-  --color-brand-50: #eef2fb;
-  --color-brand-100: #dce5f7;
-  --color-brand-200: #b9caef;
-  --color-brand-300: #8da6e0;
-  --color-brand-400: #5a78cb;
-  --color-brand-500: #3a55b0;
-  --color-brand-600: #2c4093;
-  --color-brand-700: #233377;
-  --color-brand-800: #1b285d;
-  --color-brand-900: #131c43;
-  --color-brand-950: #0b1230;
+  --color-brand-50: #f4f5f6;
+  --color-brand-100: #e6e8eb;
+  --color-brand-200: #cdd0d6;
+  --color-brand-300: #a3a8b2;
+  --color-brand-400: #7a808c;
+  --color-brand-500: #565b66;
+  --color-brand-600: #3c4049;
+  --color-brand-700: #2a2d34;
+  --color-brand-800: #1b1d22;
+  --color-brand-900: #131417;
+  --color-brand-950: #0c0d0f;
 
-  --color-accent-50: #fef2f1;
-  --color-accent-100: #fde3e1;
-  --color-accent-200: #fbc9c5;
-  --color-accent-300: #f7a19b;
-  --color-accent-400: #f0685f;
-  --color-accent-500: #e2352e;
-  --color-accent-600: #c92a25;
-  --color-accent-700: #a5201d;
-  --color-accent-800: #851e1e;
-  --color-accent-900: #6f1e1e;
+  --color-accent-50: #fff1f0;
+  --color-accent-100: #ffdedb;
+  --color-accent-200: #ffb9b3;
+  --color-accent-300: #ff8a80;
+  --color-accent-400: #f4523f;
+  --color-accent-500: #e5251b;
+  --color-accent-600: #c81d14;
+  --color-accent-700: #a31610;
+  --color-accent-800: #7d110d;
+  --color-accent-900: #520b08;
 
   --color-signal-100: #fff3c2;
   --color-signal-300: #ffd84d;
@@ -49,16 +53,16 @@
   --color-signal-500: #f5b400;
   --color-signal-700: #8a6400;
 
-  --color-sand-50: #faf8f5;
-  --color-sand-100: #f4f1ec;
-  --color-sand-200: #e9e4dc;
-  --color-sand-300: #d8d1c5;
-  --color-sand-400: #b5ac9c;
-  --color-sand-500: #8a8273;
-  --color-sand-600: #6a6357;
-  --color-sand-700: #4f4a41;
-  --color-sand-800: #37332d;
-  --color-sand-900: #24211d;
+  --color-sand-50: #f7f7f8;
+  --color-sand-100: #f0f1f3;
+  --color-sand-200: #e3e5e8;
+  --color-sand-300: #d0d3d8;
+  --color-sand-400: #a9adb5;
+  --color-sand-500: #7e838d;
+  --color-sand-600: #5e636d;
+  --color-sand-700: #454952;
+  --color-sand-800: #2f3239;
+  --color-sand-900: #1d1f24;
 
   /* Status colours. Danger is deliberately a different red from the brand accent. */
   --color-success-50: #ecf8f1;
@@ -80,14 +84,15 @@
   --color-line: var(--color-sand-200);
   --color-line-strong: var(--color-sand-300);
 
-  --radius-control: 0.625rem;
-  --radius-card: 1rem;
+  --radius-control: 0.25rem;
+  --radius-card: 0.5rem;
 
   /* Restrained elevation: hairline plus a whisper of shadow. */
-  --shadow-card: 0 1px 2px 0 rgb(19 28 67 / 0.05);
-  --shadow-overlay: 0 24px 48px -12px rgb(11 18 48 / 0.28);
+  --shadow-card: 0 1px 2px 0 rgb(11 10 9 / 0.05);
+  --shadow-overlay: 0 24px 48px -12px rgb(12 13 15 / 0.28);
   /* Cards lifting on hover, and the trust strip: soft and low. */
-  --shadow-lift: 0 14px 32px -14px rgb(19 28 67 / 0.28), 0 2px 6px -2px rgb(19 28 67 / 0.08);
+  --shadow-lift: 0 22px 44px -18px rgb(12 13 15 / 0.35), 0 2px 8px -2px rgb(12 13 15 / 0.08);
+  --shadow-glow: 0 12px 34px -12px rgb(229 37 27 / 0.55);
 
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --animate-fade-in: fade-in 160ms var(--ease-standard);
@@ -106,6 +111,8 @@
 
 @layer base {
   html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 4.75rem; /* just under the sticky header (69px phone, 77px desktop) */
     background-color: var(--color-canvas);
     color: var(--color-ink);
     font-family: var(--font-sans);
@@ -120,24 +127,37 @@
   h1,
   h2,
   h3,
-  h4 {
+  h4,
+  .font-display {
     font-family: var(--font-display);
-    letter-spacing: -0.015em;
+    font-variant-numeric: lining-nums;
     text-wrap: balance;
+  }
+
+  /* Motorsport lettering: slanted condensed capitals. */
+  h1,
+  h2,
+  h3,
+  h4,
+  .font-display {
+    font-style: italic;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.005em;
   }
 
   /* One consistent, always-visible keyboard focus indicator. */
   :focus-visible {
-    outline: 2px solid var(--color-brand-500);
+    outline: 2px solid var(--color-accent-600);
     outline-offset: 2px;
   }
 
   ::selection {
-    background-color: var(--color-brand-200);
+    background-color: var(--color-accent-200);
   }
 
   dialog::backdrop {
-    background-color: rgb(11 18 48 / 0.55);
+    background-color: rgb(12 13 15 / 0.6);
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -149,5 +169,67 @@
       transition-duration: 0.01ms !important;
       scroll-behavior: auto !important;
     }
+  }
+}
+
+@layer utilities {
+  /* Red text for hero emphasis. */
+  .text-accent-gradient {
+    background-image: linear-gradient(100deg, var(--color-accent-400), var(--color-accent-500) 70%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  /* Frosted panel used over photography. */
+  .glass {
+    background-color: rgb(255 255 255 / 0.07);
+    border: 1px solid rgb(255 255 255 / 0.16);
+    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(14px);
+  }
+  /* Arrows in buttons nudge forward on hover. */
+  .lucide-arrow-right {
+    transition: transform 0.2s ease;
+  }
+  .group:hover .lucide-arrow-right {
+    transform: translateX(4px);
+  }
+  /* Fine film grain over dark surfaces: takes the digital flatness off large black areas. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.09;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+  /* Outlined display lettering: large numerals and the footer wordmark. */
+  .text-outline-accent {
+    color: transparent;
+    -webkit-text-stroke: 1.5px rgb(229 37 27 / 0.7);
+  }
+  @keyframes marquee {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+  .animate-marquee {
+    animation: marquee 48s linear infinite;
+  }
+  @keyframes slow-zoom {
+    from {
+      transform: scale(1.04);
+    }
+    to {
+      transform: scale(1.12);
+    }
+  }
+  .animate-slow-zoom {
+    animation: slow-zoom 22s ease-out both alternate infinite;
   }
 }

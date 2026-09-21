@@ -1,6 +1,6 @@
 /**
  * Static identity only (the trading name). Everything else about the business (phone numbers,
- * address, hours, branches, packages, prices) is managed by the owner and comes from the API.
+ * address, hours, branches, packages, prices) lives in features/public/content.ts and config/business-defaults.ts.
  */
 export const SITE_NAME = "Sri Sai Balaji Driving School";
 

@@ -1,161 +1,83 @@
-# Sri Sai Balaji Driving School — Digital Platform
+# Sri Sai Balaji Driving School: Website
 
-The digital operating system for **Sri Sai Balaji Driving School** (Kondapur and Hafeezpet, Hyderabad):
-a public website, enquiry and booking pipeline, admin dashboard, and student and instructor portals.
+The website for **Sri Sai Balaji Driving School** (Kondapur and Hafeezpet, Hyderabad): a fast, single-page
+marketing site with a WhatsApp enquiry form.
 
-> **Status: Phase 2 (public website) complete.** The public website, its public API slice (packages,
-> branches, settings, RTA services, reviews, enquiries) and SEO files are built. Authentication and the
-> admin, student and instructor areas are built in later phases. See
-> [docs/architecture.md](docs/architecture.md) for the roadmap.
+There is **no backend and no database**. Visitors send an enquiry by tapping "Send" in WhatsApp; nothing is
+stored on a server. To change the content, edit a file and redeploy.
 
 ## Technology
 
-| Layer    | Stack                                                                                              |
-| -------- | -------------------------------------------------------------------------------------------------- |
-| Frontend | React 19, TypeScript, Vite, Tailwind CSS v4, React Router 7, TanStack Query, React Hook Form + Zod |
-| Backend  | Node.js, Express 5, TypeScript, Zod, Pino, Helmet                                                  |
-| Database | PostgreSQL + Prisma 7                                                                              |
-| Auth     | JWT access tokens + rotating refresh tokens, role-based authorization (Phase 3)                    |
-| Testing  | Vitest, Supertest, Testing Library                                                                 |
+React 19, TypeScript, Vite, Tailwind CSS v4, React Router 7, React Hook Form + Zod, Vitest + Testing Library.
+Deployed to Vercel as a static site (`vercel.json`).
 
-The browser only talks to the Express API. Business rules and authorization live in the backend;
-the database is the source of truth. There is no .NET or C# anywhere in this project.
+## Getting started
 
-## Prerequisites
-
-- **Node.js ≥ 22.12** and npm ≥ 10
-- **PostgreSQL ≥ 16** (developed against 18). The `btree_gist` extension ships with PostgreSQL.
-- Git
-
-## Installation
+Requires Node.js ≥ 22.12.
 
 ```bash
-npm install          # installs both workspaces and generates the Prisma client
+npm install
+npm run dev        # http://localhost:5273 (a dedicated port with strictPort; override with VITE_DEV_PORT)
 ```
-
-## Environment setup
-
-Real configuration lives in git-ignored files. Copy the templates and fill in the placeholders:
-
-```bash
-cp server/.env.example server/.env
-cp client/.env.example client/.env.local
-```
-
-Values you **must** supply in `server/.env` (the server refuses to start without them):
-
-| Variable                                  | What to put there                                                                                                         |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`                            | Connection string for the database you create below                                                                       |
-| `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET` | Two _different_ random strings, ≥ 32 chars: `node -e "console.log(require('crypto').randomBytes(48).toString('base64'))"` |
-| `SEED_OWNER_EMAIL`, `SEED_OWNER_PASSWORD` | Credentials for the first OWNER account (only read by `npm run seed`; password ≥ 12 chars)                                |
-
-Everything else has a safe default (`PORT=4000`, `BUSINESS_TIMEZONE=Asia/Kolkata`, …). Startup
-validation names every missing or invalid variable, never echoes secret values, and in production also
-requires `CLIENT_URL` over `https`.
-
-## Database setup
-
-1. Make sure the PostgreSQL service is running. On Windows, in an **elevated** PowerShell:
-   `Start-Service postgresql-x64-18`
-2. Create a dedicated user and database (as the `postgres` superuser, e.g. in `psql -U postgres`):
-
-   ```sql
-   CREATE USER srisaibalaji WITH PASSWORD 'choose-a-strong-password' CREATEDB;
-   CREATE DATABASE srisaibalaji_dev OWNER srisaibalaji;
-   ```
-
-   `CREATEDB` lets `prisma migrate dev` create its temporary shadow database. Do not use the
-   `postgres` superuser for the application.
-
-3. Put the matching URL in `server/.env`:
-   `DATABASE_URL=postgresql://srisaibalaji:choose-a-strong-password@localhost:5432/srisaibalaji_dev`
-   (URL-encode special characters in the password).
-
-### Migrations
-
-```bash
-npm run db:migrate     # dev: apply migrations (and create new ones after schema changes)
-npm run db:deploy      # production: apply committed migrations only
-npm run db:validate    # check schema.prisma without a database
-npm run db:generate    # regenerate the Prisma client
-```
-
-There are two migrations. `…_init` is generated from `schema.prisma`. `…_integrity_constraints` is
-**hand-written**: it adds the PostgreSQL exclusion constraints that make double-booking of an
-instructor or vehicle impossible, plus `CHECK` constraints. Never edit an applied migration; add a new
-one. Details: [docs/erd.md](docs/erd.md).
-
-### Seeding
-
-```bash
-npm run seed       # production-safe: OWNER account, 2 branches, confirmed business settings, default skills
-npm run seed:dev   # development only: clearly labelled [DEV] fake data
-```
-
-`seed` creates no fake students, reviews, revenue or statistics, and is safe to re-run (it never
-overwrites owner-edited values or existing accounts). The owner must change the bootstrap password at
-first sign-in. `seed:dev` refuses to run when `NODE_ENV=production` or against a non-local database.
-
-## Development
-
-```bash
-npm run dev            # API on :4000 and web app on :5273 (Vite proxies /api to the API)
-npm run dev:server     # API only
-npm run dev:client     # web app only
-```
-
-Open http://localhost:5273 (a dedicated port with `strictPort`, so it never silently lands on another
-project's dev server; override with `VITE_DEV_PORT`). In development there is also a living style guide at
-`/dev/design-system` (absent from production builds).
 
 | Command                | What it does                                   |
 | ---------------------- | ---------------------------------------------- |
-| `npm run build`        | Type-check and build client and server         |
+| `npm run build`        | Type-check and build to `client/dist`          |
+| `npm run preview`      | Serve the production build locally             |
 | `npm run test`         | Run all tests (Vitest)                         |
-| `npm run lint`         | ESLint, client and server                      |
-| `npm run typecheck`    | TypeScript, client and server                  |
+| `npm run lint`         | ESLint                                         |
+| `npm run typecheck`    | TypeScript                                     |
 | `npm run format`       | Format everything with Prettier                |
 | `npm run format:check` | Verify formatting                              |
 | `npm run check`        | format:check + lint + typecheck + test + build |
 
-API health: `GET http://localhost:4000/api/v1/health` → `{ "data": { "status": "ok" } }`
-(`/api/v1/health/ready` also checks the database).
+Configuration is optional. Copy `client/.env.example` to `client/.env.local` to set `VITE_SITE_URL` (the public
+origin, used for canonical and Open Graph URLs). Never put secrets in `VITE_*` values: they reach the browser.
 
-Public API (no login), used by the website: `GET /api/v1/public/packages`, `/packages/:slug`,
-`/branches`, `/settings`, `/rta-services`, `/reviews`, and `POST /api/v1/public/enquiries`.
-The API also serves `/robots.txt` and `/sitemap.xml` (built from `CLIENT_URL` and the database);
-in production the reverse proxy must route those two paths to the API.
+## Changing the content
 
-### Replacing the temporary logo and hero artwork
+Everything the site says about the business lives in two files:
 
-The client's real logo and photography are not available yet, so the site uses a temporary text logo and a
-vector illustration. To swap in the real files, put them in `client/src/assets/` and set `brandLogo` and
-`heroImage` in `client/src/config/brand.ts`. Nothing else needs to change.
+- `client/src/config/business-defaults.ts`: name, phone numbers, address, recognition line, services.
+- `client/src/features/public/content.ts`: branches, **training plans**, **RTA services** and **reviews**.
 
-### Public website content
+Only facts confirmed from the business card are filled in. Plans, RTA services and reviews are empty on purpose,
+and the sections that depend on them hide themselves (or show a "contact us" prompt) rather than invent content.
+Add real entries to those arrays and the pages update.
 
-Business details (phones, address, hours), branches, packages, RTA services and reviews all come from the
-database. The facts printed on the business card are also seeded by `npm run seed`; the website shows
-them from the API, and uses `client/src/config/business-defaults.ts` only as a fallback while the API is
-loading or unreachable.
+### Logo and photography
+
+The client's real logo and photographs are not available yet. The site uses a temporary text logo and
+royalty-free **stock photographs** (Unsplash licence). They are _not_ pictures of the school's own cars,
+instructors or learners, and nothing on the site claims they are.
+
+- Logo: set `brandLogo` in `client/src/config/brand.ts`.
+- Photos: put the school's own images in `client/src/assets/photos/` and point the matching entry in
+  `client/src/config/photos.ts` at the new file (keep the key). No component changes are needed.
+
+### Link preview (WhatsApp, Facebook, Google)
+
+When someone shares the site link, the card they see is `client/public/og-image.jpg` (1200×630) with the page
+title and description from `client/index.html`. Replace the image when real photos arrive. The preview only
+works once `VITE_SITE_URL` is set to the real domain (crawlers need absolute URLs), and `apple-touch-icon.png`
+is the home-screen icon.
+
+## How enquiries work
+
+The form on the page validates the name and mobile number, then builds a ready-to-send WhatsApp message
+(`client/src/features/enquiry/message.ts`) addressed to the school's WhatsApp number. The visitor taps "Send".
+The site states that this is an enquiry, not a confirmed booking.
+
+## Going live
+
+`vercel.json` currently sends `X-Robots-Tag: noindex, nofollow` so the preview site stays out of search results.
+**Remove that header when the real domain goes live**, and set `VITE_SITE_URL`.
 
 ## Repository layout
 
 ```
-client/   React app (public site, admin, student and instructor portals)
-server/   Express API, Prisma schema, migrations, seeds
-docs/     architecture, database ERD, decisions
+client/   the React app (the whole website)
+docs/     architecture and decisions
 ```
 
-## Documentation
-
-- [docs/architecture.md](docs/architecture.md): system design, folder structure, API conventions, roadmap
-- [docs/erd.md](docs/erd.md): entities, relationships, constraints
-- [docs/decisions.md](docs/decisions.md): decisions and their reasons
-
-## Security notes
-
-- Never commit `.env` files or secrets; only `*.env.example` placeholders are tracked.
-- Permissions are enforced on the server; client route guards are only a UX layer.
-- Logs redact authorization headers, cookies, passwords and tokens, and omit query strings.
+See [docs/architecture.md](docs/architecture.md) and [docs/decisions.md](docs/decisions.md).

@@ -74,9 +74,31 @@ registration/certificate before featuring it prominently, and do not embellish i
 **Client dev proxy.** Vite proxies `/api` to Express so development is same-origin (no CORS, cookies behave
 as in production). Production is intended to be same-origin behind a reverse proxy too.
 
-**Phase 1 auth bypass (temporary).** `VITE_DEV_BYPASS_AUTH_GUARDS=true` lets developers view the
-admin/student/instructor placeholder layouts in development builds only. It has no effect in production
-builds and none on the backend. **Remove it in Phase 3.**
+**Auth design (Phase 3).**
+
+- _Access tokens are checked against the session on every request._ A pure JWT would stay valid for 15 minutes
+  after sign-out or a detected token theft. One indexed lookup per request buys instant revocation.
+- _A wrong current password on `change-password` is a 400 validation error, not a 401_, so the web app's
+  "401 means the session ended" rule can never sign someone out for a typo.
+- _The session is restored lazily._ Opening a public page does not call the API; the first protected page (or the
+  sign-in page) asks the server whether the refresh cookie is valid.
+- _The IP rate limiter counts failed attempts only_, so shared school Wi-Fi is not locked out by normal use. The
+  trade-off (a determined attacker can lock a shared IP for the window) is accepted; account lockout is per
+  account, separately.
+- _No schema change_ was needed: Phase 1's `User`, `RefreshToken`, `AuthToken`, `Notification` and `AuditLog` already
+  covered everything.
+- _The Phase 1 development auth bypass (`VITE_DEV_BYPASS_AUTH_GUARDS`) has been removed completely._ Guards now
+  depend only on a real session.
+
+**Visual identity: "midnight & champagne" (public site redesign).** Deep navy from the client's card stays as the
+structural colour; the red accent was replaced by champagne gold for calls to action, eyebrows and hairlines (red
+remains only in the logo mark). Headings use Playfair Display (serif), body text Inter. The palette is defined once
+in `client/src/styles/index.css`, so every page, including the admin/student/instructor shells, inherits it. Gold
+_text_ on light backgrounds uses `accent-700` (5:1 contrast); `accent-600` is for lines, icons and focus rings only.
+Photography comes from `client/src/config/photos.ts` and is **stock** (Unsplash licence): it is decorative, carries no
+captions claiming it shows the school's cars, instructors or learners, and is meant to be replaced by the school's
+own photos. The hero deliberately makes no statistical claims (ratings, pass rates, student counts) because none are
+confirmed.
 
 **Test quirk.** Under Vitest, `react-router` and `react-router/dom` resolve to different builds (CJS vs
 ESM), producing two router contexts. Router tests therefore import `RouterProvider` from `react-router`;
@@ -126,3 +148,26 @@ Form's built-in focusing picked the wrong field with the React 19 ref-as-prop pa
 - Hosting and backup plan; domain name.
 - A privacy policy page (the enquiry form records consent but has nothing to link to yet).
 - Privacy policy and retention (India DPDP Act 2023); never store Aadhaar numbers or document scans.
+
+## Pivot to a static single-page site (2026-09)
+
+The backend (Express, Prisma/PostgreSQL, authentication, admin/student/instructor portals, booking and payments
+plans) was removed. The client needs a marketing website, not a platform. **This supersedes every earlier entry in
+this file about the server, database, roles, authentication, the public API, honeypot/rate limiting, crawler
+files served by the API, and the multi-phase roadmap**; those are kept above only as history.
+
+- **Enquiries go through WhatsApp click-to-chat**, not a stored lead. The trade-off: no lead database and no
+  spam protection are needed, but enquiries are not recorded anywhere except in the school's WhatsApp.
+- **Content is code.** Edit `content.ts` / `business-defaults.ts` and redeploy.
+- **Old URLs redirect** to the matching section so shared links keep working.
+- **Still true:** English only; no fake production data; no unconfirmed claims (ratings, pass rates, counts);
+  stock photos are decoration and are never captioned as the school's own.
+
+## Visual identity: "racing" (2026-09, supersedes "obsidian & gold")
+
+The client rejected the dark gold theme. The site is now bright and motorsport-styled: carbon black (`brand`), racing red
+(`accent`), cool silver neutrals (`sand`), Barlow Condensed slanted uppercase headings and Barlow body text. Primary
+buttons have slanted ends; the hero photo is cut on a diagonal with a red and a carbon stripe. The logo is a red
+sports-car outline with speed streaks (`components/site/Logo.tsx`, plus `public/favicon.svg`,
+`public/apple-touch-icon.png` and `public/og-image.jpg`). It is a temporary mark: replace it via `brandLogo` when the
+client supplies theirs. Palette tokens live in `client/src/styles/index.css`.
